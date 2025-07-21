@@ -105,6 +105,97 @@ def bfs_shortest_path(start, end, area_1_data):
     
     return None  # 경로를 찾을 수 없음
 
+
+def find_optimal_all_structures_path(my_home, all_structures, area_1_data):
+    """모든 구조물을 방문하는 최적 경로 찾기 (TSP 근사해법)"""
+    if not all_structures:
+        return []
+    
+    # 각 구조물 간의 최단 거리 계산
+    all_points = [my_home] + all_structures
+    distances = {}
+    paths = {}
+    
+    print("구조물 간 최단 거리 계산 중...")
+    for i, start in enumerate(all_points):
+        for j, end in enumerate(all_points):
+            if i != j:
+                path = bfs_shortest_path(start, end, area_1_data)
+                if path:
+                    distances[(start, end)] = len(path) - 1
+                    paths[(start, end)] = path
+                else:
+                    distances[(start, end)] = float('inf')
+                    paths[(start, end)] = []
+    
+    # 작은 수의 구조물에 대해서는 완전 탐색
+    if len(all_structures) <= 8:
+        min_distance = float('inf')
+        best_order = None
+        
+        print(f"모든 구조물 방문 경로 최적화 중... ({len(all_structures)}개 구조물)")
+        for perm in itertools.permutations(all_structures):
+            total_distance = 0
+            current = my_home
+            
+            for next_point in perm:
+                if (current, next_point) in distances:
+                    total_distance += distances[(current, next_point)]
+                    current = next_point
+                else:
+                    total_distance = float('inf')
+                    break
+            
+            if total_distance < min_distance:
+                min_distance = total_distance
+                best_order = perm
+        
+        # 최적 경로 구성
+        if best_order:
+            full_path = []
+            current = my_home
+            
+            for next_point in best_order:
+                if (current, next_point) in paths:
+                    segment = paths[(current, next_point)]
+                    if full_path:  # 첫 번째가 아니면 시작점 제외
+                        segment = segment[1:]
+                    full_path.extend(segment)
+                    current = next_point
+            
+            return full_path
+    else:
+        # 많은 구조물의 경우 greedy 방법 사용
+        print(f"Greedy 방법으로 경로 계산 중... ({len(all_structures)}개 구조물)")
+        full_path = [my_home]
+        current = my_home
+        remaining = list(all_structures)
+        
+        while remaining:
+            # 가장 가까운 구조물 찾기
+            min_distance = float('inf')
+            closest = None
+            
+            for structure in remaining:
+                if (current, structure) in distances:
+                    dist = distances[(current, structure)]
+                    if dist < min_distance:
+                        min_distance = dist
+                        closest = structure
+            
+            if closest and (current, closest) in paths:
+                segment = paths[(current, closest)][1:]  # 시작점 제외
+                full_path.extend(segment)
+                current = closest
+                remaining.remove(closest)
+            else:
+                break
+        
+        return full_path
+    
+    return []
+
+
 def save_path_to_csv(path, filename):
     """경로를 CSV 파일로 저장"""
     if path:
@@ -258,6 +349,29 @@ def main(mode='shortest'):
                 print("최단 경로 탐색이 완료되었습니다.")
             else:
                 print("경로를 찾을 수 없습니다.") 
+
+        elif mode == 'all_structures':
+            # 모든 구조물 방문 경로 (보너스)
+            print("\n=== 모든 구조물 방문 경로 탐색 (보너스) ===")
+            if all_structures:
+                path = find_optimal_all_structures_path(my_home, all_structures, target_data)
+                
+                if path:
+                    print(f"모든 구조물 방문 경로 길이: {len(path) - 1} 단계")
+                    print(f"방문하는 구조물 개수: {len(all_structures)}")
+                    
+                    # CSV 저장
+                    save_path_to_csv(path, 'home_to_all_structures.csv')
+                    
+                    # 지도 시각화
+                    draw_map_with_path(target_data, path, 'map_all_structures.png', 
+                                     'Path Visiting All Structures')
+                    
+                    print("모든 구조물 방문 경로 탐색이 완료되었습니다.")
+                else:
+                    print("모든 구조물을 방문하는 경로를 찾을 수 없습니다.")
+            else:
+                print("방문할 구조물이 없습니다.")
     except Exception as e:
         print(f"오류가 발생했습니다: {e}")
 
