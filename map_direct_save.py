@@ -38,13 +38,39 @@ def load_target_area_data():
     
     return target_data
 
+def find_positions(area_1_data):
+    """내 집과 반달곰 커피 위치, 그리고 모든 구조물 위치를 찾는 함수"""
+    my_home = None
+    coffee_shop = None
+    all_structures = []
+    
+    for _, row in area_1_data.iterrows():
+        x, y = row['x'], row['y']
+        struct_name = row['struct']
+        category = row['category']
+        
+        if pd.notna(struct_name):
+            if struct_name == 'MyHome':
+                my_home = (x, y)
+            elif struct_name == 'BandalgomCoffee':
+                coffee_shop = (x, y)
+            
+            # 건설현장이 아닌 모든 구조물 (내 집 제외)
+            if (pd.notna(category) and category != 0 and 
+                struct_name != 'MyHome' and row['ConstructionSite'] != 1):
+                all_structures.append((x, y))
+    
+    return my_home, coffee_shop, all_structures
+
 
 def main(mode='shortest'):
     """메인 함수"""
     try:
         # 데이터 로드
         target_data = load_target_area_data()
-    
+
+                # 위치 찾기
+        my_home, coffee_shop, all_structures = find_positions(target_data)
     except Exception as e:
         print(f"오류가 발생했습니다: {e}")
 if __name__ == "__main__":
