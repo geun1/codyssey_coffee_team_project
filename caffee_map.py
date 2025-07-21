@@ -18,9 +18,6 @@ def analyze_data(area_map, area_struct, area_category):
     
     merged_data = merge_data(area_map, area_struct, area_category)
     
-    # area 기준으로 정렬
-    merged_data = merged_data.sort_values(['area', 'x', 'y'])
-    
     print("병합된 전체 데이터:")
     print(merged_data.head(10))
     print()
