@@ -4,51 +4,18 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-
-def load_target_area_data():
-    ## 1. MyHome과 BandalgomCoffee가 있는 area 데이터를 불러오는 함수 구현
-    ## area_map.csv, area_struct.csv, area_category.csv 불러오기
-    area_map = pd.read_csv('data/area_map.csv')
-    area_struct = pd.read_csv('data/area_struct.csv')
-    area_category = pd.read_csv('data/area_category.csv')
-    
-    ## 컬럼명 공백 제거
-    area_category.columns = area_category.columns.str.strip()
-    
-    ## area_category의 공백 제거 및 타입 변환
-    area_category['category'] = area_category['category'].astype(int)
-    area_category['struct'] = area_category['struct'].astype(str).str.strip()
-    
-    ## 데이터 병합
-    area_struct_named = area_struct.merge(area_category, on='category', how='left')
-    merged_data = area_map.merge(area_struct_named, on=['x', 'y'], how='left')
-    
-    ## MyHome과 BandalgomCoffee가 있는 area 찾기
-    my_home_area = merged_data[merged_data['struct'] == 'MyHome']['area'].iloc[0] if not merged_data[merged_data['struct'] == 'MyHome'].empty else None
-    coffee_areas = merged_data[merged_data['struct'] == 'BandalgomCoffee']['area'].unique()
-    
-    ## 대상 area들 설정
-    target_areas = set()
-    if my_home_area is not None:
-        target_areas.add(my_home_area)
-    target_areas.update(coffee_areas)
-    
-    ## 대상 area들의 데이터만 필터링
-    target_data = merged_data[merged_data['area'].isin(target_areas)].copy()
-    
-    return target_data
+from utils import load_data, merge_data
 
 
-def draw_map():
+def draw_map(area_data):
     ## 지도를 시각화하는 함수 구현
     ## load_target_area_data() 함수를 사용하여 데이터 로드
-    area_1_data = load_target_area_data()
     
     ## 지도 크기 설정 (좌측 상단이 (1,1), 우측 하단이 가장 큰 좌표)
-    max_x = area_1_data['x'].max()
-    max_y = area_1_data['y'].max()
-    min_x = area_1_data['x'].min()
-    min_y = area_1_data['y'].min()
+    max_x = area_data['x'].max()
+    max_y = area_data['y'].max()
+    min_x = area_data['x'].min()
+    min_y = area_data['y'].min()
     
     ## 그래프 설정
     fig, ax = plt.subplots(figsize=(12, 12))
@@ -66,7 +33,7 @@ def draw_map():
         ax.axhline(y=y, color='lightgray', linestyle='-', linewidth=0.5)
     
     ## 각 위치별로 구조물 그리기
-    for _, row in area_1_data.iterrows():
+    for _, row in area_data.iterrows():
         x, y = row['x'], row['y']
         construction_site = row['ConstructionSite']
         category = row['category']
@@ -138,12 +105,20 @@ def draw_map():
     ## 그래프 표시
     plt.show()
     
-    return area_1_data
+    return area_data
 
 def main():
     ## 메인 함수 구현
+
+    area_map_path = 'data/area_map.csv'
+    area_struct_path = 'data/area_struct.csv'
+    area_category_path = 'data/area_category.csv'
+    
     try:
-        area_1_data = draw_map()
+        area_map, area_struct, area_category = \
+            load_data(area_map_path, area_struct_path, area_category_path)
+        merged_data = merge_data(area_map, area_struct, area_category)
+        area_1_data = draw_map(merged_data)
         print("지도 시각화가 완료되었습니다.")
         return area_1_data
     except Exception as e:

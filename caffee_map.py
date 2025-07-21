@@ -1,17 +1,8 @@
 import pandas as pd
+from utils import load_data, merge_data
 
-
-def load_and_analyze_data():
-    """CSV 파일들을 불러와서 분석하고 area 1 데이터만 필터링"""
-    
-    # CSV 파일들 불러오기
-    print("=== CSV 파일 불러오기 ===")
-    area_map = pd.read_csv('data/area_map.csv')
-    area_struct = pd.read_csv('data/area_struct.csv')
-    area_category = pd.read_csv('data/area_category.csv')
-    
-    # 컬럼명 공백 제거
-    area_category.columns = area_category.columns.str.strip()
+def analyze_data(area_map, area_struct, area_category):
+    """데이터를 확인 및 병합하고 area 1 데이터만 필터링 후 통계 분석"""
     
     print("area_map.csv 내용:")
     print(area_map.head())
@@ -25,30 +16,7 @@ def load_and_analyze_data():
     print(area_category)
     print()
     
-    # 구조물 ID를 이름으로 변환
-    print("=== 구조물 ID를 이름으로 변환 ===")
-    # area_category의 데이터 공백 제거
-    area_category['category'] = area_category['category'].astype(int)
-    area_category['struct'] = area_category['struct'].astype(str).str.strip()
-    
-    # merge를 위해 area_struct의 category와 매핑
-    area_struct_named = area_struct.merge(
-        area_category, 
-        on='category', 
-        how='left'
-    )
-    
-    print("구조물 이름이 추가된 area_struct:")
-    print(area_struct_named.head(10))
-    print()
-    
-    # 세 데이터를 하나의 DataFrame으로 병합
-    print("=== 데이터 병합 ===")
-    merged_data = area_map.merge(
-        area_struct_named, 
-        on=['x', 'y'], 
-        how='left'
-    )
+    merged_data = merge_data(area_map, area_struct, area_category)
     
     # area 기준으로 정렬
     merged_data = merged_data.sort_values(['area', 'x', 'y'])
@@ -114,8 +82,15 @@ def load_and_analyze_data():
 
 def main():
     """메인 함수"""
+    area_map_path = 'data/area_map.csv'
+    area_struct_path = 'data/area_struct.csv'
+    area_category_path = 'data/area_category.csv'
+
     try:
-        merged_data, target_data = load_and_analyze_data()
+        area_map, area_struct, area_category = \
+            load_data(area_map_path, area_struct_path, area_category_path)
+        merged_data, target_data = \
+            analyze_data(area_map, area_struct, area_category)
         print("데이터 분석이 완료되었습니다.")
         return merged_data, target_data
     except Exception as e:

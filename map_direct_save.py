@@ -4,39 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from collections import deque
 import itertools
-
-def load_target_area_data():
-    """MyHome과 BandalgomCoffee가 있는 area 데이터를 불러오는 함수"""
-    # CSV 파일들 불러오기
-    area_map = pd.read_csv('data/area_map.csv')
-    area_struct = pd.read_csv('data/area_struct.csv')
-    area_category = pd.read_csv('data/area_category.csv')
-    
-    # 컬럼명 공백 제거
-    area_category.columns = area_category.columns.str.strip()
-    
-    # area_category의 공백 제거 및 타입 변환
-    area_category['category'] = area_category['category'].astype(int)
-    area_category['struct'] = area_category['struct'].astype(str).str.strip()
-    
-    # 데이터 병합
-    area_struct_named = area_struct.merge(area_category, on='category', how='left')
-    merged_data = area_map.merge(area_struct_named, on=['x', 'y'], how='left')
-    
-    # MyHome과 BandalgomCoffee가 있는 area 찾기
-    my_home_area = merged_data[merged_data['struct'] == 'MyHome']['area'].iloc[0] if not merged_data[merged_data['struct'] == 'MyHome'].empty else None
-    coffee_areas = merged_data[merged_data['struct'] == 'BandalgomCoffee']['area'].unique()
-    
-    # 대상 area들 설정
-    target_areas = set()
-    if my_home_area is not None:
-        target_areas.add(my_home_area)
-    target_areas.update(coffee_areas)
-    
-    # 대상 area들의 데이터만 필터링
-    target_data = merged_data[merged_data['area'].isin(target_areas)].copy()
-    
-    return target_data
+from utils import load_data, merge_data
 
 def find_positions(area_1_data):
     """내 집과 반달곰 커피 위치, 그리고 모든 구조물 위치를 찾는 함수"""
@@ -311,11 +279,17 @@ def draw_map_with_path(area_1_data, path, filename, title):
 
 def main(mode='shortest'):
     """메인 함수"""
-    try:
-        # 데이터 로드
-        target_data = load_target_area_data()
 
-                # 위치 찾기
+    area_map_path = 'data/area_map.csv'
+    area_struct_path = 'data/area_struct.csv'
+    area_category_path = 'data/area_category.csv'
+
+    try:
+        area_map, area_struct, area_category = \
+            load_data(area_map_path, area_struct_path, area_category_path)
+        target_data = merge_data(area_map, area_struct, area_category)
+
+        # 위치 찾기
         my_home, coffee_shop, all_structures = find_positions(target_data)
     
         if not my_home:
