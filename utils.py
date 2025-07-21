@@ -30,12 +30,15 @@ def load_data(area_map_path, area_struct_path, area_category_path):
     return area_map, area_struct, area_category
 
 
-def merge_data(area_map, area_struct, area_category):
+def merge_data(area_map, area_struct, area_category, default_label="None"):
     # 공사 여부, 구조물 위치 정보, 구조물 유형 라벨 정보를 모두 병합하고 area 기준으로 정렬하는 함수
 
     area_struct_named = area_struct.merge(area_category, on='category', how='left')
     merged_data = area_map.merge(area_struct_named, on=['x', 'y'], how='left')
     merged_data = merged_data.sort_values(by=['area', 'x', 'y']).reset_index(drop=True)
+    merged_data.fillna({
+        'struct': default_label
+    }, inplace=True)
 
     
     return merged_data
