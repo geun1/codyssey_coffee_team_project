@@ -48,13 +48,10 @@ def analyze_data(area_map, area_struct, area_category):
         structures = target_data[target_data['category'] != 0]
         
         if not structures.empty:
-            structure_summary = structures.groupby('struct').agg({
-                'x': 'count',
-                'category': 'first'
-            }).rename(columns={'x': 'count'})
+            structure_summary = structures.groupby('struct').size().reset_index(name='count')
             
             print("구조물 종류별 개수:")
-            print(structure_summary)
+            print(structure_summary.to_string(index=False))
             print()
             
             # 각 구조물의 위치 정보
