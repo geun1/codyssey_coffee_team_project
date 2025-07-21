@@ -26,8 +26,8 @@ def run_stage_1():
     """1단계: 데이터 수집 및 분석 실행"""
     print("\n🔍 1단계: 데이터 수집 및 분석을 실행합니다...")
     try:
-        import mas_map
-        mas_map.main()
+        import caffee_map
+        caffee_map.main()
         print("✅ 1단계가 성공적으로 완료되었습니다.")
     except ImportError:
         print("❌ mas_map.py 파일이 없습니다.")
