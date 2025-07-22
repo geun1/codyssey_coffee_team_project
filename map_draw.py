@@ -5,6 +5,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from utils import load_data, merge_data
+import math
+import matplotlib.patches as mpatches
+from matplotlib.legend_handler import HandlerPatch
 
 
 def draw_map(area_data):
@@ -64,7 +67,8 @@ def draw_map(area_data):
             
             elif struct_name == 'MyHome':
                 ## 내 집: 녹색 삼각형
-                triangle = patches.RegularPolygon((x, y), 3, radius=0.3, 
+                triangle = patches.RegularPolygon((x, y), 3, radius=0.3,
+                                                orientation=math.radians(180),  # 삼각형을 위로 향하게
                                                 linewidth=1, edgecolor='black', 
                                                 facecolor='green', alpha=0.8)
                 ax.add_patch(triangle)
@@ -77,13 +81,15 @@ def draw_map(area_data):
                 ax.add_patch(rect)
     
     ## 범례 추가 (보너스 문제)
+
+
     legend_elements = [
         patches.Circle((0, 0), 0.3, facecolor='#8B4513', edgecolor='black', label='Apartment/Building'),
         patches.Rectangle((0, 0), 0.6, 0.6, facecolor='green', edgecolor='black', label='Bandalgom Coffee'),
         patches.RegularPolygon((0, 0), 3, radius=0.3, facecolor='green', edgecolor='black', label='My Home'),
         patches.Rectangle((0, 0), 0.8, 0.8, facecolor='gray', edgecolor='black', label='Construction Site')
     ]
-    
+
     ax.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1, 1))
     
     ## 제목 및 라벨 설정
