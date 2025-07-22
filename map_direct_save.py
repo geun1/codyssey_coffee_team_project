@@ -1,3 +1,4 @@
+
 # map_direct_save.py
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -5,12 +6,185 @@ import matplotlib.patches as patches
 from collections import deque
 import itertools
 from utils import load_data, merge_data
+from matplotlib.lines import Line2D
 import math
+
+def find_optimal_all_structures_path(my_home, all_structures, coffee_shops, area_1_data):
+    """모든 구조물을 방문하고 가장 가까운 카페로 가는 최적 경로 찾기 (DP TSP)"""
+    if not all_structures:
+        print("방문할 구조물이 없습니다.")
+        return []
+    
+    if not coffee_shops:
+        print("카페가 없습니다.")
+        return []
+    
+    # 각 지점 간의 최단 거리 계산
+    all_points = [my_home] + all_structures + coffee_shops
+    distances = {}
+    paths = {}
+    
+    print("구조물 간 최단 거리 계산 중...")
+    for i, start in enumerate(all_points):
+        for j, end in enumerate(all_points):
+            if i != j:
+                path = bfs_shortest_path(start, end, area_1_data)
+                if path:
+                    distances[(start, end)] = len(path) - 1
+                    paths[(start, end)] = path
+                else:
+                    distances[(start, end)] = float('inf')
+                    paths[(start, end)] = []
+    
+    # DP를 사용한 TSP 최적화
+    def solve_tsp_dp(start, points, end_points):
+        """DP를 사용한 TSP 해결"""
+        n = len(points)
+        if n == 0:
+            return float('inf'), []
+        
+        # DP 테이블: dp[mask][pos] = 현재 위치가 pos이고 방문한 지점들이 mask일 때의 최단 거리
+        dp = {}
+        
+        def get_min_distance(mask, pos):
+            if (mask, pos) in dp:
+                return dp[(mask, pos)]
+            
+            # 모든 지점을 방문했는지 확인
+            if mask == (1 << n) - 1:
+                # 모든 구조물을 방문했으므로 가장 가까운 카페로 이동
+                min_cafe_dist = float('inf')
+                best_cafe = None
+                for cafe in end_points:
+                    if (points[pos], cafe) in distances:
+                        if distances[(points[pos], cafe)] < min_cafe_dist:
+                            min_cafe_dist = distances[(points[pos], cafe)]
+                            best_cafe = cafe
+                dp[(mask, pos)] = min_cafe_dist
+                return min_cafe_dist
+            
+            # 현재 위치에서 방문하지 않은 지점들 중 하나를 선택
+            min_dist = float('inf')
+            for next_pos in range(n):
+                if mask & (1 << next_pos) == 0:  # 아직 방문하지 않은 지점
+                    if (points[pos], points[next_pos]) in distances:
+                        dist = distances[(points[pos], points[next_pos])]
+                        remaining_dist = get_min_distance(mask | (1 << next_pos), next_pos)
+                        total_dist = dist + remaining_dist
+                        if total_dist < min_dist:
+                            min_dist = total_dist
+            
+            dp[(mask, pos)] = min_dist
+            return min_dist
+        
+        # 시작점에서 시작
+        total_distance = get_min_distance(0, 0)  # 0번째 지점(시작점)에서 시작
+        
+        if total_distance == float('inf'):
+            return []
+        
+        # 경로 복원
+        def reconstruct_path(mask, pos):
+            if mask == (1 << n) - 1:
+                # 모든 구조물을 방문했으므로 가장 가까운 카페로 이동
+                min_cafe_dist = float('inf')
+                best_cafe = None
+                for cafe in end_points:
+                    if (points[pos], cafe) in distances:
+                        if distances[(points[pos], cafe)] < min_cafe_dist:
+                            min_cafe_dist = distances[(points[pos], cafe)]
+                            best_cafe = cafe
+                return [best_cafe] if best_cafe else []
+            
+            # 다음 방문할 지점 찾기
+            min_dist = float('inf')
+            best_next = None
+            for next_pos in range(n):
+                if mask & (1 << next_pos) == 0:
+                    if (points[pos], points[next_pos]) in distances:
+                        dist = distances[(points[pos], points[next_pos])]
+                        remaining_dist = get_min_distance(mask | (1 << next_pos), next_pos)
+                        total_dist = dist + remaining_dist
+                        if total_dist < min_dist:
+                            min_dist = total_dist
+                            best_next = next_pos
+            
+            if best_next is not None:
+                return [points[best_next]] + reconstruct_path(mask | (1 << best_next), best_next)
+            return []
+        
+        # 전체 경로 구성
+        optimal_order = reconstruct_path(0, 0)
+        
+        # 경로를 실제 좌표로 변환
+        full_path = []
+        current = start
+        
+        for next_point in optimal_order:
+            if (current, next_point) in paths:
+                segment = paths[(current, next_point)]
+                if full_path:  # 첫 번째가 아니면 시작점 제외
+                    segment = segment[1:]
+                full_path.extend(segment)
+                current = next_point
+        
+        return full_path
+    
+    # 작은 수의 구조물에 대해서는 DP 사용
+    if len(all_structures) <= 12:  # DP는 12개까지 효율적
+        print(f"DP를 사용한 TSP 최적화 중... ({len(all_structures)}개 구조물)")
+        path = solve_tsp_dp(my_home, all_structures, coffee_shops)
+        return path
+    else:
+        # 많은 구조물의 경우 greedy 방법 사용
+        print(f"Greedy 방법으로 경로 계산 중... ({len(all_structures)}개 구조물)")
+        full_path = [my_home]
+        current = my_home
+        remaining = list(all_structures)
+        
+        while remaining:
+            # 가장 가까운 구조물 찾기
+            min_distance = float('inf')
+            closest = None
+            
+            for structure in remaining:
+                if (current, structure) in distances:
+                    dist = distances[(current, structure)]
+                    if dist < min_distance:
+                        min_distance = dist
+                        closest = structure
+            
+            if closest and (current, closest) in paths:
+                segment = paths[(current, closest)][1:]  # 시작점 제외
+                full_path.extend(segment)
+                current = closest
+                remaining.remove(closest)
+            else:
+                break
+        
+        # 마지막 구조물에서 가장 가까운 카페로 이동
+        if full_path:
+            last_structure = full_path[-1]
+            min_cafe_distance = float('inf')
+            closest_cafe = None
+            
+            for cafe in coffee_shops:
+                if (last_structure, cafe) in distances:
+                    dist = distances[(last_structure, cafe)]
+                    if dist < min_cafe_distance:
+                        min_cafe_distance = dist
+                        closest_cafe = cafe
+            
+            if closest_cafe and (last_structure, closest_cafe) in paths:
+                cafe_segment = paths[(last_structure, closest_cafe)][1:]
+                full_path.extend(cafe_segment)
+        
+        return full_path
 
 def find_positions(area_1_data):
     """내 집과 반달곰 커피 위치, 그리고 모든 구조물 위치를 찾는 함수"""
     my_home = None
-    coffee_shop = None
+    coffee_shops = []
     all_structures = []
     
     for _, row in area_1_data.iterrows():
@@ -22,14 +196,14 @@ def find_positions(area_1_data):
             if struct_name == 'MyHome':
                 my_home = (x, y)
             elif struct_name == 'BandalgomCoffee':
-                coffee_shop = (x, y)
-            
-            # 건설현장이 아닌 모든 구조물 (내 집 제외)
-            if (pd.notna(category) and category != 0 and 
-                struct_name != 'MyHome' and row['ConstructionSite'] != 1):
-                all_structures.append((x, y))
+                coffee_shops.append((x, y))
+        
+        # Apartment(category=1)와 Building(category=2)만 포함
+        if (pd.notna(category) and category in [1, 2] and 
+            row['ConstructionSite'] != 1):
+            all_structures.append((x, y))
     
-    return my_home, coffee_shop, all_structures
+    return my_home, coffee_shops, all_structures
 
 def is_valid_position(x, y, area_1_data):
     """해당 위치가 이동 가능한지 확인하는 함수"""
@@ -73,96 +247,6 @@ def bfs_shortest_path(start, end, area_1_data):
                 visited.add((nx, ny))
     
     return None  # 경로를 찾을 수 없음
-
-
-def find_optimal_all_structures_path(my_home, all_structures, area_1_data):
-    """모든 구조물을 방문하는 최적 경로 찾기 (TSP 근사해법)"""
-    if not all_structures:
-        return []
-    
-    # 각 구조물 간의 최단 거리 계산
-    all_points = [my_home] + all_structures
-    distances = {}
-    paths = {}
-    
-    print("구조물 간 최단 거리 계산 중...")
-    for i, start in enumerate(all_points):
-        for j, end in enumerate(all_points):
-            if i != j:
-                path = bfs_shortest_path(start, end, area_1_data)
-                if path:
-                    distances[(start, end)] = len(path) - 1
-                    paths[(start, end)] = path
-                else:
-                    distances[(start, end)] = float('inf')
-                    paths[(start, end)] = []
-    
-    # 작은 수의 구조물에 대해서는 완전 탐색
-    if len(all_structures) <= 8:
-        min_distance = float('inf')
-        best_order = None
-        
-        print(f"모든 구조물 방문 경로 최적화 중... ({len(all_structures)}개 구조물)")
-        for perm in itertools.permutations(all_structures):
-            total_distance = 0
-            current = my_home
-            
-            for next_point in perm:
-                if (current, next_point) in distances:
-                    total_distance += distances[(current, next_point)]
-                    current = next_point
-                else:
-                    total_distance = float('inf')
-                    break
-            
-            if total_distance < min_distance:
-                min_distance = total_distance
-                best_order = perm
-        
-        # 최적 경로 구성
-        if best_order:
-            full_path = []
-            current = my_home
-            
-            for next_point in best_order:
-                if (current, next_point) in paths:
-                    segment = paths[(current, next_point)]
-                    if full_path:  # 첫 번째가 아니면 시작점 제외
-                        segment = segment[1:]
-                    full_path.extend(segment)
-                    current = next_point
-            
-            return full_path
-    else:
-        # 많은 구조물의 경우 greedy 방법 사용
-        print(f"Greedy 방법으로 경로 계산 중... ({len(all_structures)}개 구조물)")
-        full_path = [my_home]
-        current = my_home
-        remaining = list(all_structures)
-        
-        while remaining:
-            # 가장 가까운 구조물 찾기
-            min_distance = float('inf')
-            closest = None
-            
-            for structure in remaining:
-                if (current, structure) in distances:
-                    dist = distances[(current, structure)]
-                    if dist < min_distance:
-                        min_distance = dist
-                        closest = structure
-            
-            if closest and (current, closest) in paths:
-                segment = paths[(current, closest)][1:]  # 시작점 제외
-                full_path.extend(segment)
-                current = closest
-                remaining.remove(closest)
-            else:
-                break
-        
-        return full_path
-    
-    return []
 
 
 def save_path_to_csv(path, filename):
@@ -228,7 +312,7 @@ def draw_map_with_path(area_1_data, path, filename, title):
                 triangle = patches.RegularPolygon((x, y), 3, radius=0.3,
                                                 orientation=math.radians(180),
                                                 linewidth=1, edgecolor='black', 
-                                                facecolor='green', alpha=0.8)
+                                                facecolor='lightgreen', alpha=0.8)
                 ax.add_patch(triangle)
             
             elif struct_name == 'BandalgomCoffee':
@@ -249,14 +333,19 @@ def draw_map_with_path(area_1_data, path, filename, title):
     
     # 범례 추가
     legend_elements = [
-        patches.Circle((0, 0), 0.3, facecolor='#8B4513', edgecolor='black', label='Apartment/Building'),
-        patches.Rectangle((0, 0), 0.6, 0.6, facecolor='green', edgecolor='black', label='Bandalgom Coffee'),
-        patches.RegularPolygon((0, 0), 3, radius=0.3, facecolor='green', edgecolor='black', label='My Home'),
-        patches.Rectangle((0, 0), 0.8, 0.8, facecolor='gray', edgecolor='black', label='Construction Site')
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='#8B4513', 
+            markersize=10, markeredgecolor='black', label='Apartment/Building'),
+        Line2D([0], [0], marker='s', color='w', markerfacecolor='green', 
+            markersize=10, markeredgecolor='black', label='Bandalgom Coffee'),
+        Line2D([0], [0], marker='^', color='w', markerfacecolor='green', 
+            markersize=10, markeredgecolor='black', label='My Home'),
+        Line2D([0], [0], marker='s', color='w', markerfacecolor='gray', 
+            markersize=12, markeredgecolor='black', label='Construction Site')
     ]
     
     if path and len(path) > 1:
-        legend_elements.append(plt.Line2D([0], [0], color='red', linewidth=3, label='Path'))
+        legend_elements.append(Line2D([0], [0], color='red', linewidth=3, label='Path'))
+
     
     ax.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1, 1))
     
@@ -292,24 +381,24 @@ def main(mode='shortest'):
         target_data = merge_data(area_map, area_struct, area_category)
 
         # 위치 찾기
-        my_home, coffee_shop, all_structures = find_positions(target_data)
+        my_home, coffee_shops, all_structures = find_positions(target_data)
     
         if not my_home:
             print("내 집 위치를 찾을 수 없습니다.")
             return
         
-        if not coffee_shop:
+        if not coffee_shops:
             print("반달곰 커피 위치를 찾을 수 없습니다.")
             return
         
         print(f"내 집 위치: {my_home}")
-        print(f"반달곰 커피 위치: {coffee_shop}")
+        print(f"반달곰 커피 위치: {coffee_shops}")
         print(f"방문 가능한 구조물 개수: {len(all_structures)}")
 
         if mode == 'shortest':
             # 최단 경로 탐색
             print("\n=== 최단 경로 탐색 ===")
-            path = bfs_shortest_path(my_home, coffee_shop, target_data)
+            path = bfs_shortest_path(my_home, coffee_shops[0], target_data) # 첫 번째 카페로 이동
             
             if path:
                 print(f"최단 경로 길이: {len(path) - 1} 단계")
@@ -327,25 +416,26 @@ def main(mode='shortest'):
                 print("경로를 찾을 수 없습니다.") 
 
         elif mode == 'all_structures':
-            # 모든 구조물 방문 경로 (보너스)
-            print("\n=== 모든 구조물 방문 경로 탐색 (보너스) ===")
+            # 모든 구조물 방문 후 카페로 가는 경로
+            print("\n=== 모든 구조물 방문 후 카페로 가는 경로 탐색 ===")
             if all_structures:
-                path = find_optimal_all_structures_path(my_home, all_structures, target_data)
+                path = find_optimal_all_structures_path(my_home, all_structures, coffee_shops, target_data)
                 
                 if path:
-                    print(f"모든 구조물 방문 경로 길이: {len(path) - 1} 단계")
+                    print(f"전체 경로 길이: {len(path) - 1} 단계")
                     print(f"방문하는 구조물 개수: {len(all_structures)}")
+                    print(f"최종 목적지: 가장 가까운 카페")
                     
                     # CSV 저장
-                    save_path_to_csv(path, 'home_to_all_structures.csv')
+                    save_path_to_csv(path, 'home_to_all_structures_to_cafe.csv')
                     
                     # 지도 시각화
-                    draw_map_with_path(target_data, path, 'map_all_structures.png', 
-                                     'Path Visiting All Structures')
+                    draw_map_with_path(target_data, path, 'map_all_structures_to_cafe.png', 
+                                     'Path: Home → All Structures → Nearest Cafe')
                     
-                    print("모든 구조물 방문 경로 탐색이 완료되었습니다.")
+                    print("모든 구조물 방문 후 카페로 가는 경로 탐색이 완료되었습니다.")
                 else:
-                    print("모든 구조물을 방문하는 경로를 찾을 수 없습니다.")
+                    print("경로를 찾을 수 없습니다.")
             else:
                 print("방문할 구조물이 없습니다.")
     except Exception as e:
