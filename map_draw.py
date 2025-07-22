@@ -69,7 +69,7 @@ def draw_map(area_data):
                 triangle = patches.RegularPolygon((x, y), 3, radius=0.3,
                                                 orientation=math.radians(180),  # 삼각형을 위로 향하게
                                                 linewidth=1, edgecolor='black', 
-                                                facecolor='lightgreen', alpha=0.8)
+                                                facecolor='green', alpha=0.8)
                 ax.add_patch(triangle)
             
             elif struct_name == 'BandalgomCoffee':
