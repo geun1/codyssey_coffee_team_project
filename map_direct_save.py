@@ -9,6 +9,13 @@ from utils import load_data, merge_data
 from matplotlib.lines import Line2D
 import math
 
+# 애초에 도달 불가능한 경우 (건설현장으로 인해) -> 현재 dfs 알고리즘에 구현되어 있음.
+#                                         -> 보너스 문제에서는 확인이 필요한 상태
+
+# My Home 없는 경우 -> main에서 예외 처리가 잘 되어있음
+# My Home 여러 개인 경우 -> 성립이 안된다. -> 추가 완료 float('inf') 활용
+# 반달곰 커피가 없는 경우 -> main에서 예외 처리가 잘 되어있음
+
 def find_optimal_all_structures_path(my_home, all_structures, coffee_shops, area_1_data):
     """모든 구조물을 방문하고 가장 가까운 카페로 가는 최적 경로 찾기 (DP TSP)"""
     if not all_structures:
@@ -28,7 +35,7 @@ def find_optimal_all_structures_path(my_home, all_structures, coffee_shops, area
     for i, start in enumerate(all_points):
         for j, end in enumerate(all_points):
             if i != j:
-                path = bfs_shortest_path(start, [end], area_1_data)
+                path = bfs_shortest_path(start, end, area_1_data)
                 if path:
                     distances[(start, end)] = len(path) - 1
                     paths[(start, end)] = path
@@ -51,7 +58,7 @@ def find_optimal_all_structures_path(my_home, all_structures, coffee_shops, area
                 return dp[(mask, pos)]
             
             # 모든 지점을 방문했는지 확인
-            if mask == (1 << n) - 1:
+            if mask == (1 << n) - 1: # n개의 구조물을 모두 방문했다면 (=> n개의 비트가 전부 1인 상태)
                 # 모든 구조물을 방문했으므로 가장 가까운 카페로 이동
                 min_cafe_dist = float('inf')
                 best_cafe = None
@@ -63,13 +70,16 @@ def find_optimal_all_structures_path(my_home, all_structures, coffee_shops, area
                 dp[(mask, pos)] = min_cafe_dist
                 return min_cafe_dist
             
+            # 모든 지점을 방문하지 않았다면
             # 현재 위치에서 방문하지 않은 지점들 중 하나를 선택
             min_dist = float('inf')
             for next_pos in range(n):
-                if mask & (1 << next_pos) == 0:  # 아직 방문하지 않은 지점
+                if mask & (1 << next_pos) == 0:  # 아직 방문하지 않은 구조물(지점)이라면
                     if (points[pos], points[next_pos]) in distances:
                         dist = distances[(points[pos], points[next_pos])]
-                        remaining_dist = get_min_distance(mask | (1 << next_pos), next_pos)
+                        remaining_dist = get_min_distance(mask | (1 << next_pos), next_pos) # 재귀함수
+                        # dist = 지금 위치 → 다음 위치까지 가는 거리
+                        # remaining_dist = 다음 위치에서 시작해서, 나머지를 다 돌고 카페까지 가는 최단 거리
                         total_dist = dist + remaining_dist
                         if total_dist < min_dist:
                             min_dist = total_dist
@@ -194,7 +204,10 @@ def find_positions(area_1_data):
         
         if pd.notna(struct_name):
             if struct_name == 'MyHome':
-                my_home = (x, y)
+                if my_home == None:
+                    my_home = (x, y)
+                else:
+                    my_home = float('inf') # 예외 처리를 하기 위해서 불가능한 숫자를 넣음 (1개보다 많으면 무한이라고 가정) -> main 함수에서 예외처리
             elif struct_name == 'BandalgomCoffee':
                 coffee_shops.append((x, y))
         
@@ -313,7 +326,7 @@ def draw_map_with_path(area_1_data, path, filename, title):
                 triangle = patches.RegularPolygon((x, y), 3, radius=0.3,
                                                 orientation=math.radians(180),
                                                 linewidth=1, edgecolor='black', 
-                                                facecolor='lightgreen', alpha=0.8)
+                                                facecolor='green', alpha=0.8)
                 ax.add_patch(triangle)
             
             elif struct_name == 'BandalgomCoffee':
@@ -386,7 +399,11 @@ def main(mode='shortest'):
     
         if not my_home:
             print("내 집 위치를 찾을 수 없습니다.")
-            return
+            return # my_home이 없는 경우에 대한 예외 처리 존재
+        
+        if my_home == float('inf'):
+            print("내 집 위치가 여러 개여서 길 찾기를 시작할 수 없습니다.")
+            return # my_home이 여러 개인 경우에 대한 예외 처리 추가
         
         if not coffee_shops:
             print("반달곰 커피 위치를 찾을 수 없습니다.")
