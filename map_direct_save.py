@@ -87,9 +87,21 @@ def find_optimal_all_structures_path(my_home, all_structures, coffee_shops, area
             return min_dist
         
         # 시작점에서 시작
-        total_distance = get_min_distance(0, 0)  # 0번째 지점(시작점)에서 시작
+        # total_distance = get_min_distance(0, 0)  # 0번째 지점(시작점)에서 시작
+
+        min_total_distance = float('inf')
+        best_first_idx = None
+
+        for first_idx in range(len(all_structures)):
+            first_dist = distances[(my_home, all_structures[first_idx])]
+            remaining_dist = get_min_distance(1 << first_idx, first_idx)
+            total = first_dist + remaining_dist
+    
+            if total < min_total_distance:
+                min_total_distance = total
+                best_first_idx = first_idx
         
-        if total_distance == float('inf'):
+        if min_total_distance == float('inf'):
             return []
         
         # 경로 복원
