@@ -5,7 +5,13 @@ import matplotlib.patches as patches
 from collections import deque
 import itertools
 from utils import load_data, merge_data
+from matplotlib.lines import Line2D
 import math
+
+# 1. BFS가 최단 경로 알고리즘으로 좋은 경우
+# 그래프(지도)가 격자 모양이고, 이동 비용(거리)이 모두 동일할 때
+# 예를 들어, 한 칸 이동하는 데 드는 비용이 모두 똑같을 때(상하좌우 한 칸 이동이 모두 1의 비용), BFS가 가장 간단하고 빠르게 최단 경로를 찾을 수 있어요.
+# 비용이 균일하기 때문에 BFS는 최단 경로를 보장하면서 탐색 공간을 넓게 퍼져가며, 최소 이동 단계 수를 빠르게 찾아냅니다.
 
 def find_positions(area_1_data):
     """내 집과 반달곰 커피 위치, 그리고 모든 구조물 위치를 찾는 함수"""
@@ -74,7 +80,6 @@ def bfs_shortest_path(start, end, area_1_data):
     
     return None  # 경로를 찾을 수 없음
 
-
 def find_optimal_all_structures_path(my_home, all_structures, area_1_data):
     """모든 구조물을 방문하는 최적 경로 찾기 (TSP 근사해법)"""
     if not all_structures:
@@ -134,7 +139,6 @@ def find_optimal_all_structures_path(my_home, all_structures, area_1_data):
             
             return full_path
     else:
-        # 많은 구조물의 경우 greedy 방법 사용
         print(f"Greedy 방법으로 경로 계산 중... ({len(all_structures)}개 구조물)")
         full_path = [my_home]
         current = my_home
@@ -249,15 +253,19 @@ def draw_map_with_path(area_1_data, path, filename, title):
     
     # 범례 추가
     legend_elements = [
-        patches.Circle((0, 0), 0.3, facecolor='#8B4513', edgecolor='black', label='Apartment/Building'),
-        patches.Rectangle((0, 0), 0.6, 0.6, facecolor='green', edgecolor='black', label='Bandalgom Coffee'),
-        patches.RegularPolygon((0, 0), 3, radius=0.3, facecolor='green', edgecolor='black', label='My Home'),
-        patches.Rectangle((0, 0), 0.8, 0.8, facecolor='gray', edgecolor='black', label='Construction Site')
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='#8B4513', 
+            markersize=10, markeredgecolor='black', label='Apartment/Building'),
+        Line2D([0], [0], marker='s', color='w', markerfacecolor='green', 
+            markersize=10, markeredgecolor='black', label='Bandalgom Coffee'),
+        Line2D([0], [0], marker='^', color='w', markerfacecolor='green', 
+            markersize=10, markeredgecolor='black', label='My Home'),
+        Line2D([0], [0], marker='s', color='w', markerfacecolor='gray', 
+            markersize=12, markeredgecolor='black', label='Construction Site')
     ]
-    
+
     if path and len(path) > 1:
-        legend_elements.append(plt.Line2D([0], [0], color='red', linewidth=3, label='Path'))
-    
+        legend_elements.append(Line2D([0], [0], color='red', linewidth=3, label='Path'))
+
     ax.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1, 1))
     
     # 제목 및 라벨 설정

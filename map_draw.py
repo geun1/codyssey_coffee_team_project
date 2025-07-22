@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from utils import load_data, merge_data
 import math
+from matplotlib.lines import Line2D
 
 
 def draw_map(area_data):
@@ -79,13 +80,16 @@ def draw_map(area_data):
                 ax.add_patch(rect)
     
     ## 범례 추가 (보너스 문제)
-
-
+    # 색이 동일한 My Home과 Bandalgom Coffee를 구별하기 위해 범례에 모양도 같이 표시
     legend_elements = [
-        patches.Circle((0, 0), 0.3, facecolor='#8B4513', edgecolor='black', label='Apartment/Building'),
-        patches.Rectangle((0, 0), 0.6, 0.6, facecolor='green', edgecolor='black', label='Bandalgom Coffee'),
-        patches.RegularPolygon((0, 0), 3, radius=0.3, facecolor='green', edgecolor='black', label='My Home'),
-        patches.Rectangle((0, 0), 0.8, 0.8, facecolor='gray', edgecolor='black', label='Construction Site')
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='#8B4513', 
+            markersize=10, markeredgecolor='black', label='Apartment/Building'),
+        Line2D([0], [0], marker='s', color='w', markerfacecolor='green', 
+            markersize=10, markeredgecolor='black', label='Bandalgom Coffee'),
+        Line2D([0], [0], marker='^', color='w', markerfacecolor='green', 
+            markersize=10, markeredgecolor='black', label='My Home'),
+        Line2D([0], [0], marker='s', color='w', markerfacecolor='gray', 
+            markersize=12, markeredgecolor='black', label='Construction Site')
     ]
 
     ax.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1, 1))
