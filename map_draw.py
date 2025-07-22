@@ -2,6 +2,8 @@
 # 테스트입니다.
 
 import pandas as pd
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from utils import load_data, merge_data
