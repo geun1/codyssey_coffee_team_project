@@ -5,6 +5,7 @@ import matplotlib.patches as patches
 from collections import deque
 import itertools
 from utils import load_data, merge_data
+import math
 
 def find_positions(area_1_data):
     """내 집과 반달곰 커피 위치, 그리고 모든 구조물 위치를 찾는 함수"""
@@ -224,7 +225,8 @@ def draw_map_with_path(area_1_data, path, filename, title):
                 ax.add_patch(circle)
             
             elif struct_name == 'MyHome':
-                triangle = patches.RegularPolygon((x, y), 3, radius=0.3, 
+                triangle = patches.RegularPolygon((x, y), 3, radius=0.3,
+                                                orientation=math.radians(180),
                                                 linewidth=1, edgecolor='black', 
                                                 facecolor='green', alpha=0.8)
                 ax.add_patch(triangle)

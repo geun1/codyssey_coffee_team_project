@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from utils import load_data, merge_data
 import math
-import matplotlib.patches as mpatches
-from matplotlib.legend_handler import HandlerPatch
 
 
 def draw_map(area_data):
