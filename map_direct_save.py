@@ -28,7 +28,7 @@ def find_optimal_all_structures_path(my_home, all_structures, coffee_shops, area
     for i, start in enumerate(all_points):
         for j, end in enumerate(all_points):
             if i != j:
-                path = bfs_shortest_path(start, end, area_1_data)
+                path = bfs_shortest_path(start, [end], area_1_data)
                 if path:
                     distances[(start, end)] = len(path) - 1
                     paths[(start, end)] = path
@@ -240,7 +240,7 @@ def bfs_shortest_path(start, end, area_1_data):
             if (nx, ny) not in visited and is_valid_position(nx, ny, area_1_data):
                 new_path = path + [(nx, ny)]
                 
-                if (nx, ny) == end:
+                if (nx, ny) in end:
                     return new_path
                 
                 queue.append(((nx, ny), new_path))
@@ -399,7 +399,7 @@ def main(mode='shortest'):
         if mode == 'shortest':
             # 최단 경로 탐색
             print("\n=== 최단 경로 탐색 ===")
-            path = bfs_shortest_path(my_home, coffee_shops[0], target_data) # 첫 번째 카페로 이동
+            path = bfs_shortest_path(my_home, coffee_shops, target_data) # 첫 번째 카페로 이동
             
             if path:
                 print(f"최단 경로 길이: {len(path) - 1} 단계")
