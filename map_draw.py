@@ -80,8 +80,7 @@ def draw_map(area_data):
                 ax.add_patch(rect)
     
     ## 범례 추가 (보너스 문제)
-
-
+    # 색이 동일한 My Home과 Bandalgom Coffee를 구별하기 위해 범례에 모양도 같이 표시
     legend_elements = [
         Line2D([0], [0], marker='o', color='w', markerfacecolor='#8B4513', 
             markersize=10, markeredgecolor='black', label='Apartment/Building'),

@@ -249,6 +249,7 @@ def bfs_shortest_path(start, end, area_1_data):
     return None  # 경로를 찾을 수 없음
 
 
+
 def save_path_to_csv(path, filename):
     """경로를 CSV 파일로 저장"""
     if path:
@@ -342,11 +343,11 @@ def draw_map_with_path(area_1_data, path, filename, title):
         Line2D([0], [0], marker='s', color='w', markerfacecolor='gray', 
             markersize=12, markeredgecolor='black', label='Construction Site')
     ]
-    
+
     if path and len(path) > 1:
         legend_elements.append(Line2D([0], [0], color='red', linewidth=3, label='Path'))
 
-    
+
     ax.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1, 1))
     
     # 제목 및 라벨 설정
