@@ -1,4 +1,3 @@
-
 # map_direct_save.py
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -9,8 +8,8 @@ from utils import load_data, merge_data
 from matplotlib.lines import Line2D
 import math
 
-# 애초에 도달 불가능한 경우 (건설현장으로 인해) -> 현재 dfs 알고리즘에 구현되어 있음.
-#                                         -> 보너스 문제에서는 확인이 필요한 상태
+# 애초에 도달 불가능한 경우 (건설현장으로 인해) -> 현재 bfs 알고리즘에 구현되어 있음.
+#                                         -> 보너스 문제에서는 확인이 필요한 상태 -> 구현되어 있음
 
 # My Home 없는 경우 -> main에서 예외 처리가 잘 되어있음
 # My Home 여러 개인 경우 -> 성립이 안된다. -> 추가 완료 float('inf') 활용
@@ -35,7 +34,7 @@ def find_optimal_all_structures_path(my_home, all_structures, coffee_shops, area
     for i, start in enumerate(all_points):
         for j, end in enumerate(all_points):
             if i != j:
-                path = bfs_shortest_path(start, end, area_1_data)
+                path = bfs_shortest_path(start, [end], area_1_data)
                 if path:
                     distances[(start, end)] = len(path) - 1
                     paths[(start, end)] = path
@@ -207,7 +206,8 @@ def find_positions(area_1_data):
                 if my_home == None:
                     my_home = (x, y)
                 else:
-                    my_home = float('inf') # 예외 처리를 하기 위해서 불가능한 숫자를 넣음 (1개보다 많으면 무한이라고 가정) -> main 함수에서 예외처리
+                    my_home = (-1, -1) # 수정 요청 (3) 반영 -> (-1, -1)로 설정 (이 값은 해당 데이터에서 불가능한 값이므로 이 값으로 설정) -> main 함수에서 예외처리
+                    break # 수정 요청 (2) 반영 -> break로 바로 종료
             elif struct_name == 'BandalgomCoffee':
                 coffee_shops.append((x, y))
         
@@ -401,7 +401,7 @@ def main(mode='shortest'):
             print("내 집 위치를 찾을 수 없습니다.")
             return # my_home이 없는 경우에 대한 예외 처리 존재
         
-        if my_home == float('inf'):
+        if my_home == (-1, -1):
             print("내 집 위치가 여러 개여서 길 찾기를 시작할 수 없습니다.")
             return # my_home이 여러 개인 경우에 대한 예외 처리 추가
         
