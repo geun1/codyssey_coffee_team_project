@@ -11,60 +11,158 @@ import math
 
 def find_optimal_all_structures_path(my_home, all_structures, coffee_shops, area_1_data):
     """모든 구조물을 방문하고 가장 가까운 카페로 가는 최적 경로 찾기 (DP TSP)"""
+    
+    print(f"\n=== TSP 알고리즘 시작 ===")
+    print(f"시작점 (내 집): {my_home}")
+    print(f"방문할 구조물: {all_structures}")
+    print(f"도착점 (카페): {coffee_shops}")
+    print(f"총 구조물 개수: {len(all_structures)}")
+    
+    # 1. 입력 검증
     if not all_structures:
-        print("방문할 구조물이 없습니다.")
+        print("❌ 방문할 구조물이 없습니다.")
         return []
     
     if not coffee_shops:
-        print("카페가 없습니다.")
+        print("❌ 카페가 없습니다.")
         return []
     
-    # 각 지점 간의 최단 거리 계산
+    # 2. 모든 지점 간의 최단 거리 계산
     all_points = [my_home] + all_structures + coffee_shops
-    distances = {}
-    paths = {}
+    distances = {}  # (시작점, 끝점) -> 최단 거리
+    paths = {}      # (시작점, 끝점) -> 최단 경로
     
-    print("구조물 간 최단 거리 계산 중...")
+    print(f"\n=== 최단 거리 계산 시작 ===")
+    print(f"전체 지점: {all_points}")
+    
     for i, start in enumerate(all_points):
         for j, end in enumerate(all_points):
             if i != j:
+                print(f"  계산 중: {start} → {end}")
                 path = bfs_shortest_path(start, [end], area_1_data)
                 if path:
-                    distances[(start, end)] = len(path) - 1
+                    dist = len(path) - 1
+                    distances[(start, end)] = dist
                     paths[(start, end)] = path
+                    print(f"    ✅ 거리: {dist}")
                 else:
                     distances[(start, end)] = float('inf')
                     paths[(start, end)] = []
+                    print(f"    ❌ 경로 없음")
     
-    # DP를 사용한 TSP 최적화
+    # 3. DP를 사용한 TSP 최적화
     def solve_tsp_dp(start, points, end_points):
-        """DP를 사용한 TSP 해결"""
-        n = len(points)
+        """DP를 사용한 TSP 해결 - 모든 구조물을 방문하고 카페로 이동"""
+        n = len(points)  # 방문할 구조물 개수
+        print(f"\n=== DP TSP 시작 ===")
+        print(f"방문할 구조물: {points}")
+        print(f"도착점 카페: {end_points}")
+        
         if n == 0:
+            print("❌ 방문할 구조물이 없음")
             return float('inf'), []
         
         # DP 테이블: dp[mask][pos] = 현재 위치가 pos이고 방문한 지점들이 mask일 때의 최단 거리
         dp = {}
         
         def get_min_distance(mask, pos):
+            """재귀적으로 최단 거리 계산"""
+            print(f"  DP 호출: mask={bin(mask)[2:].zfill(n)}, pos={pos} ({points[pos]})")
+            
+            # 이미 계산된 경우 캐시된 값 반환
             if (mask, pos) in dp:
+                print(f"    캐시된 값 사용: {dp[(mask, pos)]}")
                 return dp[(mask, pos)]
             
-            # 모든 지점을 방문했는지 확인
+            # 모든 구조물을 방문했는지 확인 (mask가 모든 비트가 1인지 확인)
             if mask == (1 << n) - 1:
+                print(f"    모든 구조물 방문 완료! 카페로 이동")
                 # 모든 구조물을 방문했으므로 가장 가까운 카페로 이동
                 min_cafe_dist = float('inf')
                 best_cafe = None
                 for cafe in end_points:
                     if (points[pos], cafe) in distances:
-                        if distances[(points[pos], cafe)] < min_cafe_dist:
-                            min_cafe_dist = distances[(points[pos], cafe)]
+                        dist = distances[(points[pos], cafe)]
+                        print(f"      {points[pos]} → {cafe}: 거리 {dist}")
+                        if dist < min_cafe_dist:
+                            min_cafe_dist = dist
                             best_cafe = cafe
+                
+                # 카페에 도달할 수 없으면 실패
+                if min_cafe_dist == float('inf'):
+                    print(f"    ❌ 카페에 도달할 수 없음")
+                    dp[(mask, pos)] = float('inf')
+                    return float('inf')
+                
+                print(f"    ✅ 최적 카페: {best_cafe}, 거리: {min_cafe_dist}")
                 dp[(mask, pos)] = min_cafe_dist
                 return min_cafe_dist
             
             # 현재 위치에서 방문하지 않은 지점들 중 하나를 선택
             min_dist = float('inf')
+            best_next = None
+            
+            print(f"    방문하지 않은 지점들 탐색:")
+            for next_pos in range(n):
+                # 아직 방문하지 않은 지점인지 확인 (비트마스크로 확인)
+                if mask & (1 << next_pos) == 0:
+                    print(f"      후보: {points[next_pos]} (pos={next_pos})")
+                    if (points[pos], points[next_pos]) in distances:
+                        # 현재 지점에서 다음 지점까지의 거리
+                        dist = distances[(points[pos], points[next_pos])]
+                        print(f"        현재 거리: {dist}")
+                        
+                        # 다음 지점을 방문한 후의 최단 거리 (재귀 호출)
+                        new_mask = mask | (1 << next_pos)
+                        remaining_dist = get_min_distance(new_mask, next_pos)
+                        print(f"        나머지 거리: {remaining_dist}")
+                        
+                        # 전체 거리 = 현재 거리 + 나머지 거리
+                        total_dist = dist + remaining_dist
+                        print(f"        총 거리: {total_dist}")
+                        
+                        if total_dist < min_dist:
+                            min_dist = total_dist
+                            best_next = next_pos
+                            print(f"        ✅ 새로운 최적 경로 발견!")
+            
+            print(f"    최적 다음 지점: {points[best_next] if best_next is not None else 'None'}")
+            dp[(mask, pos)] = min_dist
+            return min_dist
+        
+        # 4. 시작점에서 시작하여 최단 거리 계산
+        print(f"\n=== 전체 최단 거리 계산 시작 ===")
+        total_distance = get_min_distance(0, 0)  # 0번째 지점(시작점)에서 시작
+        
+        print(f"전체 최단 거리: {total_distance}")
+        
+        # 경로를 찾을 수 없으면 실패
+        if total_distance == float('inf'):
+            print("❌ 경로를 찾을 수 없음")
+            return []
+        
+        # 5. 경로 복원 (실제 방문 순서 찾기)
+        def reconstruct_path(mask, pos):
+            """DP 결과를 바탕으로 실제 경로 복원"""
+            print(f"  경로 복원: mask={bin(mask)[2:].zfill(n)}, pos={pos}")
+            
+            # 모든 구조물을 방문했으면 가장 가까운 카페로 이동
+            if mask == (1 << n) - 1:
+                print(f"    모든 구조물 방문 완료, 카페로 이동")
+                min_cafe_dist = float('inf')
+                best_cafe = None
+                for cafe in end_points:
+                    if (points[pos], cafe) in distances:
+                        dist = distances[(points[pos], cafe)]
+                        if dist < min_cafe_dist:
+                            min_cafe_dist = dist
+                            best_cafe = cafe
+                print(f"    선택된 카페: {best_cafe}")
+                return [best_cafe] if best_cafe else []
+            
+            # 다음 방문할 지점 찾기 (DP에서 선택한 최적 경로)
+            min_dist = float('inf')
+            best_next = None
             for next_pos in range(n):
                 if mask & (1 << next_pos) == 0:  # 아직 방문하지 않은 지점
                     if (points[pos], points[next_pos]) in distances:
@@ -73,113 +171,152 @@ def find_optimal_all_structures_path(my_home, all_structures, coffee_shops, area
                         total_dist = dist + remaining_dist
                         if total_dist < min_dist:
                             min_dist = total_dist
-            
-            dp[(mask, pos)] = min_dist
-            return min_dist
-        
-        # 시작점에서 시작
-        total_distance = get_min_distance(0, 0)  # 0번째 지점(시작점)에서 시작
-        
-        if total_distance == float('inf'):
-            return []
-        
-        # 경로 복원
-        def reconstruct_path(mask, pos):
-            if mask == (1 << n) - 1:
-                # 모든 구조물을 방문했으므로 가장 가까운 카페로 이동
-                min_cafe_dist = float('inf')
-                best_cafe = None
-                for cafe in end_points:
-                    if (points[pos], cafe) in distances:
-                        if distances[(points[pos], cafe)] < min_cafe_dist:
-                            min_cafe_dist = distances[(points[pos], cafe)]
-                            best_cafe = cafe
-                return [best_cafe] if best_cafe else []
-            
-            # 다음 방문할 지점 찾기
-            min_dist = float('inf')
-            best_next = None
-            for next_pos in range(n):
-                if mask & (1 << next_pos) == 0:
-                    if (points[pos], points[next_pos]) in distances:
-                        dist = distances[(points[pos], points[next_pos])]
-                        remaining_dist = get_min_distance(mask | (1 << next_pos), next_pos)
-                        total_dist = dist + remaining_dist
-                        if total_dist < min_dist:
-                            min_dist = total_dist
                             best_next = next_pos
             
+            # 다음 지점을 방문하고 나머지 경로 재귀적으로 복원
             if best_next is not None:
+                print(f"    다음 방문: {points[best_next]}")
                 return [points[best_next]] + reconstruct_path(mask | (1 << best_next), best_next)
             return []
         
-        # 전체 경로 구성
+        # 6. 전체 경로 구성
+        print(f"\n=== 경로 복원 시작 ===")
         optimal_order = reconstruct_path(0, 0)
+        print(f"최적 방문 순서: {optimal_order}")
         
-        # 경로를 실제 좌표로 변환
+        # 7. 경로를 실제 좌표로 변환 (BFS 경로로 세분화)
+        print(f"\n=== 실제 경로 구성 ===")
         full_path = []
         current = start
         
-        for next_point in optimal_order:
+        for i, next_point in enumerate(optimal_order):
+            print(f"  세그먼트 {i+1}: {current} → {next_point}")
             if (current, next_point) in paths:
                 segment = paths[(current, next_point)]
-                if full_path:  # 첫 번째가 아니면 시작점 제외
+                if full_path:  # 첫 번째가 아니면 시작점 제외 (중복 방지)
                     segment = segment[1:]
                 full_path.extend(segment)
+                print(f"    경로 길이: {len(segment)}")
                 current = next_point
+            else:
+                print(f"    ❌ 경로 없음!")
         
+        print(f"최종 경로 길이: {len(full_path)}")
         return full_path
     
-    # 작은 수의 구조물에 대해서는 DP 사용
+    # 8. 알고리즘 선택 및 실행
+    # 작은 수의 구조물에 대해서는 DP 사용 (정확한 최적해)
     if len(all_structures) <= 12:  # DP는 12개까지 효율적
-        print(f"DP를 사용한 TSP 최적화 중... ({len(all_structures)}개 구조물)")
+        print(f"\n=== DP 알고리즘 사용 ===")
+        print(f"구조물 개수: {len(all_structures)}개 (DP 사용)")
         path = solve_tsp_dp(my_home, all_structures, coffee_shops)
-        return path
+        
+        # 모든 구조물을 방문할 수 있는지 확인
+        if path:
+            visited_structures = set()
+            for point in path:
+                if point in all_structures:
+                    visited_structures.add(point)
+            
+            print(f"\n=== 방문 검증 ===")
+            print(f"방문한 구조물: {visited_structures}")
+            print(f"전체 구조물: {set(all_structures)}")
+            print(f"방문한 구조물 개수: {len(visited_structures)}")
+            print(f"전체 구조물 개수: {len(all_structures)}")
+            
+            # 모든 구조물을 방문하지 못했으면 실패
+            if len(visited_structures) != len(all_structures):
+                print("❌ 일부 구조물에 도달할 수 없습니다.")
+                return []
+            
+            # 마지막에 카페에 도달했는지 확인
+            if path and path[-1] not in coffee_shops:
+                print("❌ 카페에 도달할 수 없습니다.")
+                return []
+            
+            print("✅ 모든 구조물 방문 및 카페 도달 성공!")
+            return path
+        else:
+            print("❌ 경로를 찾을 수 없습니다.")
+            return []
     else:
-        # 많은 구조물의 경우 greedy 방법 사용
-        print(f"Greedy 방법으로 경로 계산 중... ({len(all_structures)}개 구조물)")
+        # 9. 많은 구조물의 경우 greedy 방법 사용 (근사해)
+        print(f"\n=== Greedy 알고리즘 사용 ===")
+        print(f"구조물 개수: {len(all_structures)}개 (Greedy 사용)")
+        
         full_path = [my_home]
         current = my_home
         remaining = list(all_structures)
+        visited_structures = set()
         
+        print(f"시작점: {current}")
+        print(f"남은 구조물: {remaining}")
+        
+        # 모든 구조물을 방문
         while remaining:
             # 가장 가까운 구조물 찾기
             min_distance = float('inf')
             closest = None
             
+            print(f"\n현재 위치: {current}")
+            print(f"남은 구조물: {remaining}")
+            
             for structure in remaining:
                 if (current, structure) in distances:
                     dist = distances[(current, structure)]
+                    print(f"  {current} → {structure}: 거리 {dist}")
                     if dist < min_distance:
                         min_distance = dist
                         closest = structure
             
+            # 가장 가까운 구조물로 이동
             if closest and (current, closest) in paths:
                 segment = paths[(current, closest)][1:]  # 시작점 제외
                 full_path.extend(segment)
                 current = closest
                 remaining.remove(closest)
+                visited_structures.add(closest)
+                print(f"  ✅ 선택: {closest} (거리: {min_distance})")
             else:
-                break
+                # 도달할 수 없는 구조물이 있으면 실패
+                print(f"  ❌ 도달할 수 없는 구조물: {remaining}")
+                return []
         
-        # 마지막 구조물에서 가장 가까운 카페로 이동
+        # 10. 마지막 구조물에서 가장 가까운 카페로 이동
         if full_path:
             last_structure = full_path[-1]
+            print(f"\n마지막 구조물: {last_structure}")
+            print(f"가능한 카페: {coffee_shops}")
+            
             min_cafe_distance = float('inf')
             closest_cafe = None
             
             for cafe in coffee_shops:
                 if (last_structure, cafe) in distances:
                     dist = distances[(last_structure, cafe)]
+                    print(f"  {last_structure} → {cafe}: 거리 {dist}")
                     if dist < min_cafe_distance:
                         min_cafe_distance = dist
                         closest_cafe = cafe
             
+            # 카페에 도달할 수 있는지 확인
             if closest_cafe and (last_structure, closest_cafe) in paths:
                 cafe_segment = paths[(last_structure, closest_cafe)][1:]
                 full_path.extend(cafe_segment)
+                print(f"  ✅ 선택된 카페: {closest_cafe} (거리: {min_cafe_distance})")
+                
+                # 모든 구조물을 방문했는지 확인
+                if len(visited_structures) == len(all_structures):
+                    print("✅ 모든 구조물 방문 완료!")
+                    return full_path
+                else:
+                    print("❌ 모든 구조물을 방문하지 못했습니다.")
+                    return []
+            else:
+                print("❌ 카페에 도달할 수 없습니다.")
+                return []
         
-        return full_path
+        return []
 
 def find_positions(area_1_data):
     """내 집과 반달곰 커피 위치, 그리고 모든 구조물 위치를 찾는 함수"""
@@ -222,7 +359,7 @@ def is_valid_position(x, y, area_1_data):
 
 def bfs_shortest_path(start, end, area_1_data):
     """BFS를 사용한 최단 경로 탐색"""
-    if start == end:
+    if start in end:
         return [start]
     
     queue = deque([(start, [start])])

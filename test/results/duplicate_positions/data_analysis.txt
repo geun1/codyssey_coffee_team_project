@@ -1,0 +1,85 @@
+=== 1단계: 데이터 수집 및 분석 결과 ===
+
+area_map.csv 내용:
+   x  y  ConstructionSite
+0  0  0                 0
+1  0  0                 0
+2  1  1                 0
+3  1  1                 0
+
+area_struct.csv 내용:
+   x  y  category  area
+0  0  0         3     0
+1  0  0         4     0
+2  1  1         1     0
+3  1  1         2     0
+
+area_category.csv 내용:
+   category           struct
+0         1        Apartment
+1         2         Building
+2         3           MyHome
+3         4  BandalgomCoffee
+
+병합된 전체 데이터:
+   x  y  ConstructionSite  category  area           struct
+0  0  0                 0         3     0           MyHome
+1  0  0                 0         4     0  BandalgomCoffee
+2  0  0                 0         3     0           MyHome
+3  0  0                 0         4     0  BandalgomCoffee
+4  1  1                 0         1     0        Apartment
+5  1  1                 0         2     0         Building
+6  1  1                 0         1     0        Apartment
+7  1  1                 0         2     0         Building
+
+=== BandalgomCoffee 관련 area 데이터 필터링 ===
+BandalgomCoffee가 있는 분석 대상 area들: [0]
+
+대상 area 데이터:
+   x  y  ConstructionSite  category  area           struct
+0  0  0                 0         3     0           MyHome
+1  0  0                 0         4     0  BandalgomCoffee
+2  0  0                 0         3     0           MyHome
+3  0  0                 0         4     0  BandalgomCoffee
+4  1  1                 0         1     0        Apartment
+5  1  1                 0         2     0         Building
+6  1  1                 0         1     0        Apartment
+7  1  1                 0         2     0         Building
+
+대상 area 데이터 개수: 8
+
+=== 구조물 종류별 요약 통계 (보너스) ===
+구조물 종류별 개수:
+         struct  count
+      Apartment      2
+BandalgomCoffee      2
+       Building      2
+         MyHome      2
+
+MyHome 위치:
+ x  y
+ 0  0
+ 0  0
+
+BandalgomCoffee 위치:
+ x  y
+ 0  0
+ 0  0
+
+Apartment 위치:
+ x  y
+ 1  1
+ 1  1
+
+Building 위치:
+ x  y
+ 1  1
+ 1  1
+
+=== 기본 통계 정보 ===
+총 지점 수: 8
+건설현장: 0개
+아파트: 2개
+빌딩: 2개
+내 집: 2개
+카페: 2개

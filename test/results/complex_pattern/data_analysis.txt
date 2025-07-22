@@ -1,0 +1,145 @@
+=== 1단계: 데이터 수집 및 분석 결과 ===
+
+area_map.csv 내용:
+   x  y  ConstructionSite
+0  0  0                 0
+1  0  1                 0
+2  0  2                 0
+3  0  3                 0
+4  0  4                 1
+
+area_struct.csv 내용:
+   x  y  category  area
+0  0  0         3     0
+1  0  1         2     0
+2  0  2         2     0
+3  0  3         2     0
+4  0  4         1     0
+
+area_category.csv 내용:
+   category           struct
+0         1        Apartment
+1         2         Building
+2         3           MyHome
+3         4  BandalgomCoffee
+
+병합된 전체 데이터:
+   x  y  ConstructionSite  category  area     struct
+0  0  0                 0         3     0     MyHome
+1  0  1                 0         2     0   Building
+2  0  2                 0         2     0   Building
+3  0  3                 0         2     0   Building
+4  0  4                 1         1     0  Apartment
+5  0  5                 0         2     0   Building
+6  1  0                 0         2     0   Building
+7  1  1                 0         1     0  Apartment
+8  1  2                 0         1     0  Apartment
+9  1  3                 1         1     0  Apartment
+
+=== BandalgomCoffee 관련 area 데이터 필터링 ===
+BandalgomCoffee가 있는 분석 대상 area들: [0]
+
+대상 area 데이터:
+    x  y  ConstructionSite  category  area           struct
+0   0  0                 0         3     0           MyHome
+1   0  1                 0         2     0         Building
+2   0  2                 0         2     0         Building
+3   0  3                 0         2     0         Building
+4   0  4                 1         1     0        Apartment
+5   0  5                 0         2     0         Building
+6   1  0                 0         2     0         Building
+7   1  1                 0         1     0        Apartment
+8   1  2                 0         1     0        Apartment
+9   1  3                 1         1     0        Apartment
+10  1  4                 0         1     0        Apartment
+11  1  5                 0         1     0        Apartment
+12  2  0                 0         2     0         Building
+13  2  1                 0         1     0        Apartment
+14  2  2                 0         4     0  BandalgomCoffee
+15  2  3                 0         2     0         Building
+16  2  4                 0         1     0        Apartment
+17  2  5                 0         1     0        Apartment
+18  3  0                 0         2     0         Building
+19  3  1                 1         1     0        Apartment
+20  3  2                 0         2     0         Building
+21  3  3                 0         2     0         Building
+22  3  4                 0         2     0         Building
+23  3  5                 1         1     0        Apartment
+24  4  0                 1         1     0        Apartment
+25  4  1                 0         1     0        Apartment
+26  4  2                 0         1     0        Apartment
+27  4  3                 0         2     0         Building
+28  4  4                 1         1     0        Apartment
+29  4  5                 0         1     0        Apartment
+30  5  0                 0         2     0         Building
+31  5  1                 0         1     0        Apartment
+32  5  2                 0         1     0        Apartment
+33  5  3                 1         1     0        Apartment
+34  5  4                 0         1     0        Apartment
+35  5  5                 0         4     0  BandalgomCoffee
+
+대상 area 데이터 개수: 36
+
+=== 구조물 종류별 요약 통계 (보너스) ===
+구조물 종류별 개수:
+         struct  count
+      Apartment     20
+BandalgomCoffee      2
+       Building     13
+         MyHome      1
+
+MyHome 위치:
+ x  y
+ 0  0
+
+Building 위치:
+ x  y
+ 0  1
+ 0  2
+ 0  3
+ 0  5
+ 1  0
+ 2  0
+ 2  3
+ 3  0
+ 3  2
+ 3  3
+ 3  4
+ 4  3
+ 5  0
+
+Apartment 위치:
+ x  y
+ 0  4
+ 1  1
+ 1  2
+ 1  3
+ 1  4
+ 1  5
+ 2  1
+ 2  4
+ 2  5
+ 3  1
+ 3  5
+ 4  0
+ 4  1
+ 4  2
+ 4  4
+ 4  5
+ 5  1
+ 5  2
+ 5  3
+ 5  4
+
+BandalgomCoffee 위치:
+ x  y
+ 2  2
+ 5  5
+
+=== 기본 통계 정보 ===
+총 지점 수: 36
+건설현장: 7개
+아파트: 20개
+빌딩: 13개
+내 집: 1개
+카페: 2개
