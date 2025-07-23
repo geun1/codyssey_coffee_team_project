@@ -29,7 +29,7 @@ def run_stage_1():
         caffee_map.main()
         print("✅ 1단계가 성공적으로 완료되었습니다.")
     except ImportError:
-        print("❌ mas_map.py 파일이 없습니다.")
+        print("❌ caffee_map.py 파일이 없습니다.")
     except Exception as e:
         print(f"❌ 1단계 실행 중 오류가 발생했습니다: {e}")
 

@@ -23,12 +23,10 @@ def analyze_data(area_map, area_struct, area_category):
     print()
     
     # area 1에 대한 데이터만 필터링
-    print("=== BandalgomCoffee 관련 area 데이터 필터링 ===")
+    # area가 1인 곳으로 필터링
+    target_areas = [1]  # area 1만 선택
     
-    # BandalgomCoffee가 있는 area 찾기
-    target_areas = merged_data[merged_data['struct'] == 'BandalgomCoffee']['area'].unique()
-    
-    print(f"BandalgomCoffee가 있는 분석 대상 area들: {target_areas}")
+    print(f"BandalgomCoffee가 있는 분석 대상 area들: area 1")
     
     # 대상 area들의 데이터 필터링
     target_data = merged_data[merged_data['area'].isin(target_areas)].copy()
